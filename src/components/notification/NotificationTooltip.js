@@ -1,10 +1,23 @@
 import React from "react";
 import { useNavbarStyles } from "../../styles";
+import { Typography } from '@material-ui/core';
 
-function NotificationTooltip() {
-  useNavbarStyles();
 
-  return <div>NotificationTooltip</div>;
+const NotificationTooltip = () => {
+  const classes = useNavbarStyles();
+
+  return (
+    <div className={classes.tooltipContainer}>
+      <div className={classes.tooltip}>
+        <span aria-label='Followers' className={classes.followers}></span>
+        <Typography>1</Typography>
+      </div>
+      <div className={classes.tooltip}>
+        <span aria-label='Likes' className={classes.followers}></span>
+        <Typography>1</Typography>
+      </div>
+    </div>
+  )
 }
 
 export default NotificationTooltip;

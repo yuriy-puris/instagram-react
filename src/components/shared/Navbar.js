@@ -1,11 +1,16 @@
 import React from "react";
-import { useNavbarStyles, WhiteTooltip } from "../../styles";
+import { useNavbarStyles, WhiteTooltip, RedTooltip } from "../../styles";
 import { 
   AppBar,
   Hidden,
   InputBase,
   Avatar,
+  Typography,
+  Grid,
+  Fade,
+  Zoom,
  } from "@material-ui/core";
+import NotificationTooltip from '../notification/NotificationTooltip';
 import { Link, useHistory } from "react-router-dom";
 import logo from "../../images/logo.png";
 import { LoadingIcon, AddIcon, LikeIcon, LikeActiveIcon, ExploreIcon, ExploreActiveIcon, HomeIcon, HomeActiveIcon } from '../../icons';
@@ -23,7 +28,7 @@ function Navbar({ minimalNavbar }) {
         <Logo />
         {!minimalNavbar && 
           <>
-            <Search />
+            <Search history={history} />
             <Links path={path} />
           </>
         }
@@ -46,7 +51,7 @@ const Logo = () => {
   );
 };
 
-const Search = () => {
+const Search = ({ history }) => {
   const classes = useNavbarStyles();
   const [loading, setLoading] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -65,31 +70,80 @@ const Search = () => {
 
   return (
     <Hidden xsDown>
-      <InputBase 
-        className={classes.input}
-        onChange={event => setQuery(event.target.value)}
-        startAdornment={<span className={classes.searchIcon} />}
-        endAdornment={
-          loading ? (
-            <LoadingIcon />
-          ) : (
-            <span onClick={handlerClearInput} className={classes.searchIcon} />
+      <WhiteTooltip
+        arrow
+        interactive
+        TransitionComponent={Fade}
+        title={
+          hasResults && (
+            <Grid className={classes.resultContainer} container>
+              { results.map(result => (
+                <Grid
+                  key={result.id}
+                  item
+                  className={classes.resultLink}
+                  onClick={() => {
+                    history.push(`${result.user.username}`)
+                    handlerClearInput()
+                  }}
+                >
+                  <div className={classes.resultWrapper}>
+                    <div className={classes.avatarWrapper}>
+                      <Avatar src={result.user.profile_image} alt="user avatar" />
+                    </div>
+                    <div className={classes.nameWrapper}>
+                      <Typography variant="body1">
+                        {result.user.name}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {result.user.username}
+                      </Typography>
+                    </div>
+                  </div>
+                </Grid>
+              )) }
+            </Grid>
           )
         }
-        value={query}
-        placeholder='Search'
-      />
+      >
+        <InputBase 
+          className={classes.input}
+          onChange={event => setQuery(event.target.value)}
+          startAdornment={<span className={classes.searchIcon} />}
+          endAdornment={
+            loading ? (
+              <LoadingIcon />
+            ) : (
+              <span onClick={handlerClearInput} className={classes.searchIcon} />
+            )
+          }
+          value={query}
+          placeholder='Search'
+        />
+      </WhiteTooltip>
     </Hidden>
   )
 };
 
 const Links = ({ path }) => {
   const classes = useNavbarStyles();
-  const [showList, setList] = React.useState('');
+  const [showList, setList] = React.useState(false);
+  const [showTooltip, setTooltip] = React.useState(true);
 
   const handlerToggleList = () => {
     setList(prev => !prev);
   };
+
+  const handleHideTooltip = () => {
+    setTooltip(false);
+  };
+
+  React.useEffect(() => {
+    const timeout = setTimeout(handleHideTooltip, 5000);
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, []);
 
   return (
     <div className={classes.linksContainer}>
@@ -103,9 +157,19 @@ const Links = ({ path }) => {
         <Link to="/explore">
           { path === '/explore' ? <ExploreActiveIcon /> : <ExploreIcon /> }
         </Link>
-        <div className={classes.notification} onClick={handlerToggleList}>
-          { showList ? <LikeActiveIcon /> : <LikeIcon /> }
-        </div>
+        <RedTooltip
+          arrow
+          open={showTooltip}
+          onOpen={handleHideTooltip}
+          TransitionComponent={Zoom}
+          title={
+            <NotificationTooltip />
+          }
+        >
+          <div className={classes.notification} onClick={handlerToggleList}>
+            { showList ? <LikeActiveIcon /> : <LikeIcon /> }
+          </div>
+        </RedTooltip>
         <Link to={`${defaultCurrentUser.username}`}>
           <div className={path === `/${defaultCurrentUser.username}` ? classes.profileActive : ""}></div>
           <Avatar 
