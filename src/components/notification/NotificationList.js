@@ -1,15 +1,19 @@
 import React from "react";
 import { useNotificationListStyles } from "../../styles";
-import { defaultNotifications } from '../data';
+import { defaultNotifications } from '../../data';
 import { Grid, Avatar, Typography } from '@material-ui/core';
 import { Link } from 'react-router-dom';
-import { FollowButton } from '../shared/FollowButton';
+import FollowButton from '../shared/FollowButton';
+import useOutsideClick from '@rooks/use-outside-click';
 
-function NotificationList() {
+function NotificationList({ handleHideList }) {
   const classes = useNotificationListStyles();
+  const listContainerRef = React.useRef();
+
+  useOutsideClick(listContainerRef, handleHideList);
 
   return (
-    <Grid className={classes.listContainer} container>
+    <Grid ref={listContainerRef} className={classes.listContainer} container>
       {
         defaultNotifications.map(notification => {
           const isLike = notification.type === 'like';

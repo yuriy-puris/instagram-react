@@ -15,25 +15,35 @@ import { Link, useHistory } from "react-router-dom";
 import logo from "../../images/logo.png";
 import { LoadingIcon, AddIcon, LikeIcon, LikeActiveIcon, ExploreIcon, ExploreActiveIcon, HomeIcon, HomeActiveIcon } from '../../icons';
 import { defaultCurrentUser, getDefaultPost } from '../../data';
+import NotificationList from "../notification/NotificationList";
+import { useNProgress } from '@tanem/react-nprogress';
 
 
 function Navbar({ minimalNavbar }) {
   const classes = useNavbarStyles();
   const history = useHistory();
   const path = history.location.pathname;
+  const [isLoadingPage, setLoadingPage] = React.useState(true);
+
+  React.useEffect(() => {
+    setLoadingPage(false);
+  }, [path]);
 
   return (
-    <AppBar className={classes.appBar}>
-      <section className={classes.section}>
-        <Logo />
-        {!minimalNavbar && 
-          <>
-            <Search history={history} />
-            <Links path={path} />
-          </>
-        }
-      </section>
-    </AppBar>
+    <>
+      <Progress isAnimating={isLoadingPage} />
+      <AppBar className={classes.appBar}>
+        <section className={classes.section}>
+          <Logo />
+          {!minimalNavbar && 
+            <>
+              <Search history={history} />
+              <Links path={path} />
+            </>
+          }
+        </section>
+      </AppBar>
+    </>
   );
 }
 
@@ -138,6 +148,10 @@ const Links = ({ path }) => {
     setTooltip(false);
   };
 
+  const handleHideList = () => {
+    setList(false);
+  };
+
   React.useEffect(() => {
     const timeout = setTimeout(handleHideTooltip, 5000);
     return () => {
@@ -147,6 +161,7 @@ const Links = ({ path }) => {
 
   return (
     <div className={classes.linksContainer}>
+      { showList && <NotificationList handleHideList={handleHideList} /> }
       <div className={classes.linksWrapper}>
         <Hidden xsDown>
           <AddIcon  />
@@ -182,6 +197,27 @@ const Links = ({ path }) => {
   )
 };
 
+const Progress = ({ isAnimating }) => {
+  const classes = useNavbarStyles();
+  const { animationDuration, isFinished, progress } = useNProgress({ isAnimating });
 
+  return (
+    <div className={classes.progressContainer}
+      style={{
+        opacity: isFinished ? 0 : 1,
+        transition: `opacity ${ animationDuration }ms linear`
+      }}
+    >
+      <div className={classes.progressBar}
+        style={{
+          marginLeft: `${(-1 + progress) * 100}%`,
+          transition: `margin-left ${animationDuration}ms linear`
+        }}
+      >
+        <div className={classes.progressBackground} />
+      </div>
+    </div>
+  )
+};
 
 export default Navbar;
