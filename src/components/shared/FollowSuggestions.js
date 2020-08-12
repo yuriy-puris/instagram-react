@@ -11,19 +11,23 @@ import { Avatar } from "@material-ui/core";
 import FollowButton from "./FollowButton";
 
 
-const FollowSuggestions = () => {
+const FollowSuggestions = ({ hideHeader }) => {
   const classes = useFollowSuggestionsStyles();
   const [isLoading] = React.useState(false);
 
   return (
     <div className={classes.container}>
-      <Typography
-        color="textSecondary"
-        variant="subtitle2"
-        className={classes.typography}
-      >
-        Suggestions For You
-      </Typography>
+    {  
+      !hideHeader && (
+          <Typography
+          color="textSecondary"
+          variant="subtitle2"
+          className={classes.typography}
+        >
+          Suggestions For You
+        </Typography>
+      )
+    }
       { isLoading ? ( 
         <LoadingLargeIcon /> 
         ) : ( 
