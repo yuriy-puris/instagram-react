@@ -8,7 +8,7 @@ import GridPost from '../shared/GridPost'
 
 const ExploreGrid = () => {
   const classes = useExploreGridStyles();
-  const [isLoading, setLoading] = React.useState(false);
+  const [isLoading] = React.useState(false);
 
   return (
     <>
