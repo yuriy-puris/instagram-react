@@ -57,7 +57,24 @@ const AuthProvider = ({ children }) => {
 
   const signInWithGoogle = async () => {
     try {
-      await firebase.auth().signInWithPopup(provider);
+      const data = await firebase.auth().signInWithPopup(provider);
+      console.log(data)
+      if ( data.additionalUserInfo.isNewUser ) {
+        const { uid, displayName, email, photoURL } = data.user;
+        const username = `${displayName.replace(/\s+/g, '')}${uid.slice(-5)}`;
+        const variables = {
+          userId: uid,
+          name: displayName,
+          username,
+          emal: email,
+          bio: '',
+          website: '',
+          phone_number: '',
+          last_checked: '',
+          profile_image: photoURL
+        }
+        await createUser({ variables });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -71,6 +88,11 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const signInWithEmailAndPassword = async (email, password) => {
+    const data = await firebase.auth().signInWithEmailAndPassword(email, password);
+    return data;  
   };
 
   const signUpWithEmailAndPassword = async (formData) => {
@@ -99,6 +121,7 @@ const AuthProvider = ({ children }) => {
         value={{
           authState,
           signInWithGoogle,
+          signInWithEmailAndPassword,
           signOut,
           signUpWithEmailAndPassword
         }}

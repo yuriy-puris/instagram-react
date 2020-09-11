@@ -6,14 +6,63 @@ import {
   CardHeader,
   TextField,
   Button,
-  Typography
+  Typography,
+  InputAdornment
 } from "@material-ui/core";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import { useForm } from 'react-hook-form';
 import FacebookIconBlue from "../images/facebook-icon-blue.svg";
 import FacebookIconWhite from "../images/facebook-icon-white.png";
+import { AuthContext } from '../auth';
+import isEmail from 'validator/lib/isEmail';
+import { useApolloClient } from "@apollo/react-hooks";
+import { GET_USER_EMAIL } from "../graphql/queries";
+import { AuthError } from './signup';
 
 function LoginPage() {
   const classes = useLoginPageStyles();
+  const { register, handleSubmit, watch, formState } = useForm({ mode: 'onBlur' });
+  const [showPassword, setPasswordVisibility] = React.useState(false);
+  const hasPassword = Boolean(watch('password'));
+  const {signInWithEmailAndPassword} = React.useContext(AuthContext);
+  const history = useHistory();
+  const client = useApolloClient();
+  const [error, setError] = React.useState('');
+  
+  const togglePasswordVisibility = () => {
+    setPasswordVisibility(prev => !prev);
+  };
+
+  const onSubmit = async ({ input, password }) => {
+    try {
+      setError('');
+      if ( !isEmail(input) ) {
+        input = await getUserEmail(input);
+      }
+      await signInWithEmailAndPassword(input, password);
+      setTimeout(() => { history.push('/') }, 0);
+    } catch (error) {
+      console.log('Error message', error);
+      handlerError(error);
+    }
+  };
+
+  const handlerError = error => {
+    if (error.code.include('auth')) {
+      setError(error.message);
+    }
+  };
+
+  const getUserEmail = async input => {
+    const variables = { input };
+    const response = await client.query({
+      query: GET_USER_EMAIL,
+      variables
+    });
+    const userEmail = response.data.users[0]?.emal || "no@email.com";
+    console.log(userEmail);
+    return userEmail;
+  };
 
   return (
     <>
@@ -22,25 +71,47 @@ function LoginPage() {
         <article>
           <Card className={classes.card}>
             <CardHeader className={classes.cardHeader} />
-            <form>
+            <form onSubmit={ handleSubmit(onSubmit) }>
               <TextField
+                name="input"
+                inputRef={
+                  register({
+                    required: true,
+                    minLength: 5
+                  })
+                }
                 fullWidth
                 variant="filled"
-                label="Username"
+                label="Username, email or phone"
                 margin="dense"
                 className={classes.textField}
                 autoComplete="username"
               />
               <TextField
+                name="password"
+                inputRef={
+                  register({
+                    required: true,
+                    minLength: 5
+                  })
+                }
+                InputProps={{
+                  endAdornment: hasPassword && (
+                    <InputAdornment>
+                      <Button onClick={togglePasswordVisibility}>{ showPassword ? 'Hide' : 'Show' }</Button>
+                    </InputAdornment>
+                  )
+                }}
                 fullWidth
                 variant="filled"
                 label="Password"
                 margin="dense"
                 className={classes.textField}
                 autoComplete="current-password"
-                type="password"
+                type={ showPassword ? 'text' : 'password' }
               />
               <Button
+                disabled={!formState.isValid || formState.isSubmitting}
                 variant="contained"
                 fullWidth
                 color="primary"
@@ -60,6 +131,7 @@ function LoginPage() {
               <div className={classes.orLine} />
             </div>
             <LoginWithFacebook color="secondary" iconColor="blue" />
+            <AuthError error={error} />
             <Button fullWidth color="secondary">
               <Typography variant="caption">Forgot password?</Typography>
             </Button>
@@ -82,18 +154,35 @@ function LoginPage() {
 
 export function LoginWithFacebook({ color, iconColor, variant }) {
   const classes = useLoginPageStyles();
+  const { signInWithGoogle } = React.useContext(AuthContext);
+  const [error, setError] = React.useState('');
+  const history = useHistory();
   const facebookIcon =
     iconColor === "blue" ? FacebookIconBlue : FacebookIconWhite;
 
+  const handleSignInWithGoogle = async () => {
+    try {
+      setError('');
+      await signInWithGoogle();
+      history.push('/');
+    } catch (error) {
+      console.error('Error logging whit google', error);
+      setError(error.message);
+    }
+  };
+
   return (
-    <Button fullWidth color={color} variant={variant}>
-      <img
-        src={facebookIcon}
-        alt="facebook icon"
-        className={classes.facebookIcon}
-      />
-      Log In with Facebook
-    </Button>
+    <>
+      <Button onClick={handleSignInWithGoogle} fullWidth color={color} variant={variant}>
+        <img
+          src={facebookIcon}
+          alt="facebook icon"
+          className={classes.facebookIcon}
+        />
+        Log In with Facebook
+      </Button>
+      <AuthError error={error} />
+    </>
   );
 }
 
