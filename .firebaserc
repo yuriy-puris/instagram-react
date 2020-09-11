@@ -1,5 +1,6 @@
 {
   "projects": {
-    "instagram": "instagram-app-clone-54786"
+    "instagram": "instagram-app-clone-54786",
+    "default": "instagram-app-clone-54786"
   }
 }

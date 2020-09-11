@@ -1,23 +1,30 @@
+import React from "react";
 import firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
-import React from "react";
-import App from "./App";
+import defaultUserImage from './images/default-user-image.jpg' 
+import { CREATE_USER } from "./graphql/mutations";
+import { useMutation } from "@apollo/react-hooks";
 
 const provider = new firebase.auth.GoogleAuthProvider();
 
 // Find these options in your Firebase console
 firebase.initializeApp({
-  apiKey: "xxx",
-  authDomain: "xxx",
-  databaseURL: "xxx",
-  projectId: "xxx",
-  storageBucket: "xxx",
-  messagingSenderId: "xxx"
+  apiKey: "AIzaSyBSxjqSXYnUH04qsStp9qWKdiHAHnbF1Wc",
+  authDomain: "instagram-app-clone-54786.firebaseapp.com",
+  databaseURL: "https://instagram-app-clone-54786.firebaseio.com",
+  projectId: "instagram-app-clone-54786",
+  storageBucket: "instagram-app-clone-54786.appspot.com",
+  messagingSenderId: "947070168125",
+  appId: "1:947070168125:web:6752d8f3dc2f0d57410e54",
+  measurementId: "G-9JRD5S1BPM"
 });
 
-const AuthProvider = () => {
+export const AuthContext = React.createContext();
+
+const AuthProvider = ({ children }) => {
   const [authState, setAuthState] = React.useState({ status: "loading" });
+  const [createUser] = useMutation(CREATE_USER);
 
   React.useEffect(() => {
     firebase.auth().onAuthStateChanged(async user => {
@@ -33,7 +40,7 @@ const AuthProvider = () => {
           // Check if refresh is required.
           const metadataRef = firebase
             .database()
-            .ref("metadata/" + user.uid + "/refreshTime");
+            .ref(`metadata/${user.uid}/refreshTime`);
 
           metadataRef.on("value", async (data) => {
             if(!data.exists) return
@@ -66,29 +73,40 @@ const AuthProvider = () => {
     }
   };
 
-  let content;
-  if (authState.status === "loading") {
-    content = null;
-  } else {
-    content = (
-      <>
-        <div>
-          {authState.status === "in" ? (
-            <div>
-              <h2>Welcome, {authState.user.displayName}</h2>
-              <button onClick={signOut}>Sign out</button>
-            </div>
-          ) : (
-            <button onClick={signInWithGoogle}>Sign in with Google</button>
-          )}
-        </div>
+  const signUpWithEmailAndPassword = async (formData) => {
+    const data = await firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password);
+    if ( data.additionalUserInfo.isNewUser ) {
+      const variables = {
+        userId: data.user.uid,
+        name: formData.name,
+        username: formData.username,
+        emal: data.user.email,
+        bio: '',
+        website: '',
+        phone_number: '',
+        last_checked: '',
+        profile_image: defaultUserImage
+      }
+      await createUser({ variables });
+    }
+  };
 
-        <App authState={authState} />
-      </>
+  if (authState.status === "loading") {
+    return null;
+  } else {
+    return (
+      <AuthContext.Provider
+        value={{
+          authState,
+          signInWithGoogle,
+          signOut,
+          signUpWithEmailAndPassword
+        }}
+      >
+        { children }
+      </AuthContext.Provider>
     );
   }
-
-  return <div className="auth">{content}</div>;
 }
 
 
