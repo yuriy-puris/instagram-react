@@ -80,6 +80,11 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateEmail = async email => {
+    await authState.user.updateEmail(email);
+    console.log(authState.user);
+  };
+
   const signOut = async () => {
     try {
       setAuthState({ status: "loading" });
@@ -123,7 +128,8 @@ const AuthProvider = ({ children }) => {
           signInWithGoogle,
           signInWithEmailAndPassword,
           signOut,
-          signUpWithEmailAndPassword
+          signUpWithEmailAndPassword,
+          updateEmail
         }}
       >
         { children }

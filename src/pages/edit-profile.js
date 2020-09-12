@@ -10,16 +10,34 @@ import {
   ListItem,
   ListItemText,
   Typography,
-  TextField
+  TextField, Snackbar, Slide
 } from "@material-ui/core";
 import { Menu } from "@material-ui/icons";
-import { defaultCurrentUser } from "../data";
 import ProfilePicture from "../components/shared/ProfilePicture";
+import { UserContext } from '../App';
+import { useMutation, useQuery } from "@apollo/react-hooks";
+import { GET_EDIT_USER_PROFILE } from '../graphql/queries';
+import { EDIT_USER, EDIT_USER_AVATAR } from '../graphql/mutations';
+import LoadingScreen from "../components/shared/LoadingScreen";
+import { useForm } from 'react-hook-form';
+import isURL from 'validator/lib/isURL';
+import isEmail from 'validator/lib/isEmail';
+import isMobilePhone from 'validator/lib/isMobilePhone';
+import { AuthContext } from "../auth";
+import handleImageUpload from "../utils/handleImageUpload";
+
+
+const DEFAULT_ERROR = { type: '', message: '' };
 
 const EditProfilePage = ({ history }) => {
+  const { currentUserId } = React.useContext(UserContext);
+  const variables = { id: currentUserId };
+  const { data, loading } = useQuery(GET_EDIT_USER_PROFILE, { variables });
   const classes = useEditProfilePageStyles();
   const path = history.location.pathname;
   const [showDrawer, setDrawer] = React.useState(false);
+
+  if ( loading ) return <LoadingScreen />;
 
   const handleToggleDrawer = () => {
     setDrawer(prev => !prev);
@@ -116,7 +134,7 @@ const EditProfilePage = ({ history }) => {
           </Hidden>
         </nav>
         <main>
-          {path.includes("edit") && <EditUserInfo user={defaultCurrentUser} />}
+          {path.includes("edit") && <EditUserInfo user={data.users_by_pk} />}
         </main>
       </section>
     </Layout>
@@ -125,38 +143,118 @@ const EditProfilePage = ({ history }) => {
 
 const EditUserInfo = ({ user }) => {
   const classes = useEditProfilePageStyles();
+  const { register, handleSubmit } = useForm({ mode: 'onBlur' });
+  const [editUser] = useMutation(EDIT_USER);
+  const [editUserAvatar] = useMutation(EDIT_USER_AVATAR);
+  const { updateEmail } = React.useContext(AuthContext);
+  const [error, setError] = React.useState(DEFAULT_ERROR);
+  const [open, setOpen] = React.useState(false);
+  const [profileImage, setProfileImage] = React.useState(user.profile_image);
+
+  const onSubmit = async data => {
+    try {
+      setError(DEFAULT_ERROR);
+      const variables = { ...data, id: user.id };
+      await updateEmail(data.emal);
+      variables.emal = data.emal;
+      delete variables.email;
+      await editUser({ variables });
+      setOpen(true);
+    } catch (error) {
+      console.log('Error updating profile', error);
+      handleError(error);
+    }
+  };
+
+  const handleError = error => {
+    if ( error.message.include('users_username_key') ) {
+      setError({ type: 'username', message: 'Username already taken'});
+    } else if (error.code.include('auth')) {
+      setError({ type: 'email', message: error.message});
+    }
+  };
+
+  const handleUpdateProfilePic = async event => {
+    const url = await handleImageUpload(event.target.files[0]);
+    const variables = { id: user.id, profileImage: url };
+    await editUserAvatar({ variables });
+    setProfileImage(url);
+  };
+
 
   return (
     <section className={classes.container}>
       <div className={classes.pictureSectionItem}>
-        <ProfilePicture size={38} user={user} />
+        <ProfilePicture size={38} image={profileImage} />
         <div className={classes.justifySelfStart}>
           <Typography className={classes.typography}>
             { user.username }
           </Typography>
-          <Typography 
-            color='primary'
-            variant='body2'
-            className={classes.typographyChangePic}>
-            Change profile photos
-          </Typography>
+          <input 
+            type="file"
+            accept='image/*'
+            id='image'
+            style={{ display: 'none' }}
+            onChange={handleUpdateProfilePic}  
+          />
+          <label htmlFor="image">
+            <Typography 
+              color='primary'
+              variant='body2'
+              className={classes.typographyChangePic}>
+              Change profile photos
+            </Typography>
+          </label>
         </div>
       </div>
-      <form className={classes.form}>
-        <SectionItem text='Name' formItem={user.name} />
-        <SectionItem text='Username' formItem={user.username} />
-        <SectionItem text='Website' formItem={user.website} />
+      <form
+        onSubmit={handleSubmit(onSubmit)} 
+        className={classes.form}>
+        <SectionItem 
+          name='name'
+          inputRef={register({
+            required: true,
+            minLength: 5,
+            maxLength: 20
+          })}
+          text='Name' 
+          formItem={user.name} />
+        <SectionItem
+          error={error}
+          name='username'
+          inputRef={register({
+            required: true,
+            pattern: /^[a-zA-Z0-9_.]*$/,
+            minLength: 5,
+            maxLength: 20
+          })} 
+          text='Username' 
+          formItem={user.username} />
+        <SectionItem
+          name='website'
+          inputRef={register({
+            validate: input => Boolean(input) ? isURL(input, {
+              protocols: ['http', 'https'],
+              required_protocol: true
+            }) : true
+          })} 
+          text='Website' 
+          formItem={user.website} />
         <div className={classes.sectionItem}>
           <aside>
             <Typography className={classes.bio}>Bio</Typography>
           </aside>
-          <TextField 
+          <TextField
+            name='bio'
+            inputRef={register({
+              maxLength: 120
+            })} 
             variant='outlined'
             multiline
             fullWidth
             rowsMax={3}
             rows={3}
-            value={user.bio}
+            defaultValue={user.bio}
           />
         </div>
         <div className={classes.sectionItem}>
@@ -165,8 +263,23 @@ const EditUserInfo = ({ user }) => {
             Personal information
           </Typography>
         </div>
-        <SectionItem text='Email' formItem={user.email} />
-        <SectionItem text='Phone Number' formItem={user.phone_number} />
+        <SectionItem
+          error={error}
+          name='emal'
+          inputRef={register({
+            required: true,
+            validate: input => isEmail(input)
+          })} 
+          text='Email' 
+          formItem={user.emal} />
+        <SectionItem
+          name='phoneNumber'
+          inputRef={register({
+            required: false,
+            validate: input => Boolean(input) ? isMobilePhone(input) : true
+          })}  
+          text='Phone Number' 
+          formItem={user.phone_number} />
         <div className={classes.sectionItem}>
           <div />
           <Button
@@ -179,11 +292,18 @@ const EditUserInfo = ({ user }) => {
           </Button>
         </div>
       </form>
+      <Snackbar 
+        open={open}
+        autoHideDuration={6000}
+        message={<span>Profile updated</span>}
+        TransitionComponent={Slide}
+        onClose={() => setOpen(false)}
+      />
     </section>
   )
 };
 
-const SectionItem = ({ type='text', text, formItem }) => {
+const SectionItem = ({ type='text', text, formItem, inputRef, name, error }) => {
   const classes = useEditProfilePageStyles();
   
   return (
@@ -200,15 +320,18 @@ const SectionItem = ({ type='text', text, formItem }) => {
           </Typography>
         </Hidden>
       </aside>
-      <TextField 
+      <TextField
+        name={name}
+        inputRef={inputRef}
         variant='outlined'
         fullWidth
         type={type}
-        value={formItem}
+        defaultValue={formItem}
         className={classes.textFieldInput}
         inputProps={{
           className: classes.textFieldInput
         }}
+        helperText={error?.type === name && error.message}
       />
     </div>
   )

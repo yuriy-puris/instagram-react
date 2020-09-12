@@ -24,7 +24,7 @@ function SignUpPage() {
     try {
       setError('');
       await signUpWithEmailAndPassword(data);
-      history.push('/');
+      setTimeout(() => history.push('/'), 0);
     } catch (error) {
       handleError(error);
       console.error('Error sign up', error);

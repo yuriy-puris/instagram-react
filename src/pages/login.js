@@ -164,7 +164,7 @@ export function LoginWithFacebook({ color, iconColor, variant }) {
     try {
       setError('');
       await signInWithGoogle();
-      history.push('/');
+      setTimeout(() => history.push('/'), 0);
     } catch (error) {
       console.error('Error logging whit google', error);
       setError(error.message);

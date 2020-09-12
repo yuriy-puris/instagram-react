@@ -14,10 +14,12 @@ import NotificationTooltip from '../notification/NotificationTooltip';
 import { Link, useHistory } from "react-router-dom";
 import logo from "../../images/logo.png";
 import { LoadingIcon, AddIcon, LikeIcon, LikeActiveIcon, ExploreIcon, ExploreActiveIcon, HomeIcon, HomeActiveIcon } from '../../icons';
-import { defaultCurrentUser, getDefaultPost } from '../../data';
+import { defaultCurrentUser } from '../../data';
 import NotificationList from "../notification/NotificationList";
 import { useNProgress } from '@tanem/react-nprogress';
-
+import { useLazyQuery } from "@apollo/react-hooks";
+import { SEARCH_USERS } from "../../graphql/queries";
+import { UserContext } from '../../App';
 
 function Navbar({ minimalNavbar }) {
   const classes = useNavbarStyles();
@@ -63,9 +65,10 @@ const Logo = () => {
 
 const Search = ({ history }) => {
   const classes = useNavbarStyles();
-  const [loading] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState([]);
+  const [searchUsers, { data }] = useLazyQuery(SEARCH_USERS);
 
   const handlerClearInput = () => {
     setQuery('');
@@ -75,8 +78,14 @@ const Search = ({ history }) => {
 
   React.useEffect(() => {
     if (!query.trim) return;
-    setResults(Array.from({ length: 5 }, () => getDefaultPost()));
-  }, [query]);
+    setLoading(true);
+    const variables = { query: `%${query}%` };
+    searchUsers({ variables });
+    if ( data ) {
+      setResults(data.users);
+      setLoading(false);
+    }
+  }, [query, data, searchUsers]);
 
   return (
     <Hidden xsDown>
@@ -93,20 +102,20 @@ const Search = ({ history }) => {
                   item
                   className={classes.resultLink}
                   onClick={() => {
-                    history.push(`${result.user.username}`)
+                    history.push(`${result.username}`)
                     handlerClearInput()
                   }}
                 >
                   <div className={classes.resultWrapper}>
                     <div className={classes.avatarWrapper}>
-                      <Avatar src={result.user.profile_image} alt="user avatar" />
+                      <Avatar src={result.profile_image} alt="user avatar" />
                     </div>
                     <div className={classes.nameWrapper}>
                       <Typography variant="body1">
-                        {result.user.name}
+                        {result.name}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        {result.user.username}
+                        {result.username}
                       </Typography>
                     </div>
                   </div>
@@ -136,6 +145,7 @@ const Search = ({ history }) => {
 };
 
 const Links = ({ path }) => {
+  const { me } = React.useContext(UserContext);
   const classes = useNavbarStyles();
   const [showList, setList] = React.useState(false);
   const [showTooltip, setTooltip] = React.useState(true);
@@ -188,7 +198,7 @@ const Links = ({ path }) => {
         <Link to={`${defaultCurrentUser.username}`}>
           <div className={path === `/${defaultCurrentUser.username}` ? classes.profileActive : ""}></div>
           <Avatar 
-            src={defaultCurrentUser.profile_image}
+            src={me.profile_image}
             className={classes.profileImage}
           />
         </Link>

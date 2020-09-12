@@ -27,3 +27,45 @@ export const CREATE_USER = gql`
 		}
 	}
 `;
+
+export const EDIT_USER = gql`
+	mutation editUser(
+		$id: uuid!, 
+		$name: String!, 
+		$username: String!, 
+		$emal: String!, 
+		$bio: String,  
+		$website: String!
+    	$phoneNumber: String!) {
+			update_users(
+				where: {id: { _eq: $id }},
+				_set: {
+					website: $website, 
+					username: $username, 
+					name: $name, 
+					phone_number: $phoneNumber, 
+					emal: $emal, 
+					bio: $bio
+				}
+			) {
+			affected_rows
+		}
+	}
+`;
+
+
+export const EDIT_USER_AVATAR = gql`
+	mutation editUser(
+		$id: uuid!,
+    	$profileImage: String!
+		) {
+			update_users(
+				where: {id: { _eq: $id }},
+				_set: {
+					profile_image: $profileImage
+				}
+			) {
+			affected_rows
+		}
+	}
+`;
