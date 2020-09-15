@@ -73,7 +73,7 @@ function Post({ postId }) {
               <CommentIcon />
             </Link>
             <ShareIcon />
-            <SaveButton savedPosts={saved_posts} postId={id} />
+            <SaveButton savedPosts={saved_posts} authorId={user.id} postId={id} />
           </div>
           <Typography className={classes.likes} variant="subtitle2">
             <span>{likesCount === 1 ? "1 like" : `${likesCount} likes`}</span>
@@ -182,7 +182,8 @@ function LikeButton({ likes, postId, authorId }) {
   const [unlikePost] = useMutation(UNLIKE_POST);
   const variables = {
     postId,
-    userId: currentUserId
+    userId: currentUserId,
+    profileId: authorId
   };
 
   function handleLike() {
@@ -239,6 +240,7 @@ function Comment({ postId }) {
 
   const handleAddComment = () => {
     createComment({ variables });
+    setContent('');
   };
 
   return (
