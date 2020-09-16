@@ -148,3 +148,15 @@ export const CREATE_COMMENT = gql`
 		}
 	}
 `;
+
+
+export const CHECK_NOTIFICATION = gql`
+	mutation checkNotification($userId: uuid!, $lastChecked: String!) {
+		update_users(
+			where: { id: { _eq: $userId } }
+			_set: { last_checked: $lastChecked }
+		  ) {
+			affected_rows
+		  }
+	}
+`;

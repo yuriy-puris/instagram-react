@@ -20,6 +20,7 @@ import { useLazyQuery } from "@apollo/react-hooks";
 import { SEARCH_USERS } from "../../graphql/queries";
 import { UserContext } from '../../App';
 import AddPostDialog from '../post/AddPostDialog';
+import { isAfter } from "date-fns";
 
 function Navbar({ minimalNavbar }) {
   const classes = useNavbarStyles();
@@ -145,10 +146,14 @@ const Search = ({ history }) => {
 };
 
 const Links = ({ path }) => {
-  const { me } = React.useContext(UserContext);
+  const { me, currentUserId } = React.useContext(UserContext);
+  const newNotifications = me.notifications.filter(({ created_at }) => {
+    return isAfter(new Date(created_at), new Date(me.last_checked));
+  });
+  const hasNotifications = newNotifications.length > 0;
   const classes = useNavbarStyles();
   const [showList, setList] = React.useState(false);
-  const [showTooltip, setTooltip] = React.useState(true);
+  const [showTooltip, setTooltip] = React.useState(hasNotifications);
   const [media, setMedia] = React.useState(null);
   const [showAddPostDialog, setAppPostDialog] = React.useState();
   const inputRef = React.useRef();
@@ -187,7 +192,7 @@ const Links = ({ path }) => {
 
   return (
     <div className={classes.linksContainer}>
-      { showList && <NotificationList handleHideList={handleHideList} /> }
+      { showList && <NotificationList currentUserId={currentUserId} notifications={me.notifications} handleHideList={handleHideList} /> }
       <div className={classes.linksWrapper}>
         { showAddPostDialog && (
           <AddPostDialog media={media} handleClose={handleClose} />
@@ -215,10 +220,10 @@ const Links = ({ path }) => {
           onOpen={handleHideTooltip}
           TransitionComponent={Zoom}
           title={
-            <NotificationTooltip />
+            <NotificationTooltip notifications={newNotifications} />
           }
         >
-          <div className={classes.notification} onClick={handlerToggleList}>
+          <div className={ hasNotifications ? classes.notification : '' } onClick={handlerToggleList}>
             { showList ? <LikeActiveIcon /> : <LikeIcon /> }
           </div>
         </RedTooltip>

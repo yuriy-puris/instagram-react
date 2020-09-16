@@ -25,6 +25,7 @@ import { useSubscription, useMutation } from '@apollo/react-hooks';
 import { GET_POST } from '../../graphql/subscriptions';
 import { UserContext } from '../../App';
 import { LIKE_POST, UNLIKE_POST, SAVE_POST, UNSAVE_POST, CREATE_COMMENT } from "../../graphql/mutations";
+import { formatPostDate, formatDateToNowShort } from '../../utils/formateDate';
 
 
 function Post({ postId }) {
@@ -91,7 +92,7 @@ function Post({ postId }) {
             )) }
           </div>
           <Typography color="textSecondary" className={classes.datePosted}>
-            5 DAYS AGO
+            { formatPostDate(created_at) }
           </Typography>
           <Hidden xsDown>
             <div className={classes.comment}>
@@ -131,7 +132,7 @@ const AuthorCaption = ({ user, caption, createdAt }) => {
             { user.username }
           </Typography>
           <Typography variant='caption' color='textSecondary' style={{ display: 'inline-block', marginTop: 16, marginBottom: 4 }}>
-            { createdAt }
+            { formatDateToNowShort(createdAt) }
           </Typography>
         </Link>
       </div>
@@ -162,7 +163,7 @@ const UserComment = ({ comment }) => {
             { comment.content }
           </Typography>
           <Typography variant='caption' color='textSecondary' style={{ display: 'inline-block', marginTop: 16, marginBottom: 4 }}>
-            { comment.created_at }
+            { formatDateToNowShort(comment.created_at) }
           </Typography>
         </Link>
       </div>
