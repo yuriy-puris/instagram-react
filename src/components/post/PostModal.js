@@ -35,7 +35,7 @@ const PostModal = () => {
           }
         }}
       >
-        <Post id={postId} />
+        <Post postId={postId} />
       </Modal>
       <div onClick={() => history.goBack()} className={classes.close}>
         <CloseIcon />
