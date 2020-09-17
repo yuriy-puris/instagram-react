@@ -131,8 +131,8 @@ const SavedPosts = ({ user }) => {
     <article className={classes.article}>
       <div className={classes.postContainer}>
         {
-          user.saved_posts.map(({ post }) => (
-            <GridPost key={post.id} post={post} />
+          user.saved_posts.map(({ posts }) => (
+            <GridPost key={posts.id} post={posts} />
           ))
         }
       </div>  

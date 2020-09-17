@@ -25,11 +25,14 @@ import { UserContext } from '../App';
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const { currentUserId } = React.useContext(UserContext)
+  const { currentUserId } = React.useContext(UserContext);
   const classes = useProfilePageStyles();
   const [showOptionsMenu, setOptionsMenu] = React.useState(false);
   const variables = { username };
-  const { data, loading } = useQuery(GET_USER_PROFILE, { variables });
+  const { data, loading } = useQuery(GET_USER_PROFILE, {
+    variables,
+    fetchPolicy: "no-cache",
+  });
 
   if (loading) return <LoadingScreen />;
   const [user] = data.users;
