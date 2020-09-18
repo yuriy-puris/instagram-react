@@ -18,8 +18,9 @@ import { Link, useHistory, useParams } from "react-router-dom";
 import { GearIcon } from "../icons";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import { AuthContext } from "../auth";
-import { useQuery } from '@apollo/react-hooks';
+import { useQuery, useMutation } from '@apollo/react-hooks';
 import { GET_USER_PROFILE } from '../graphql/queries';
+import { FOLLOW_USER, UNFOLLOW_USER } from '../graphql/mutations';
 import LoadingScreen from '../components/shared/LoadingScreen';
 import { UserContext } from '../App';
 
@@ -88,10 +89,38 @@ const ProfilePage = () => {
 
 const ProfileNameSection = ({ user, isOwner, handleOptionsMenuClick }) => {
   const [showUnfollowDialog, setUnfollowDialog] = React.useState(false);
+  const { currentUserId, followingIds, followerIds } = React.useContext(UserContext);
   const classes = useProfilePageStyles();
   let followButton;
-  const isFollowing = true;
-  const isFollower = false;
+  
+  const isAlreadyFollowing = followingIds.some(id => id === user.id);
+  const [isFollowing, setFollowing] = React.useState(isAlreadyFollowing);
+
+  const isAlreadyFollower = !isFollowing && followerIds.some(id => id === user.id);
+  const [isFollower, setFollower] = React.useState(isAlreadyFollower); 
+
+  const variables = {
+    userIdToFollow: user.id,
+    currentUserId
+  };
+
+  const [followUser] = useMutation(FOLLOW_USER);
+
+  const handleFollower = () => {
+    setFollower(true);
+    followUser({ variables });
+  };
+
+  const handleFollowUser = () => {
+    setFollower(true);
+    followUser({ variables });
+  };
+
+  const onUnfollowUser = React.useCallback(() => {
+    setUnfollowDialog(false);
+    setFollowing(false);
+  }, [])
+
   if ( isFollowing ) {
     followButton = (
       <Button onClick={() => setUnfollowDialog(true)} className={classes.button} variant='outlined'>
@@ -100,13 +129,13 @@ const ProfileNameSection = ({ user, isOwner, handleOptionsMenuClick }) => {
     );
   } else if ( isFollower ) {
     followButton = (
-      <Button className={classes.button} color='primary' variant='contained'>
+      <Button onClick={handleFollower} className={classes.button} color='primary' variant='contained'>
         Follow back
       </Button>
     );
   } else {
     followButton = (
-      <Button className={classes.button} color='primary' variant='contained'>
+      <Button onClick={handleFollowUser} className={classes.button} color='primary' variant='contained'>
         Follow
       </Button>
     );
@@ -154,13 +183,24 @@ const ProfileNameSection = ({ user, isOwner, handleOptionsMenuClick }) => {
           ) : followButton}
         </section>
       </Hidden>
-      { showUnfollowDialog && <UnfollowDialog onClose={() => setUnfollowDialog(false)} user={user} /> }
+      { showUnfollowDialog && <UnfollowDialog onUnfollowUser={onUnfollowUser} user={user} /> }
     </>
   )
 };
 
-const UnfollowDialog = ({ user, onClose }) => {
+const UnfollowDialog = ({ user, onClose, onUnfollowUser }) => {
   const classes = useProfilePageStyles();
+  const { currentUserId } = React.useContext(UserContext);
+  const [unfollowUser] = useMutation(UNFOLLOW_USER);
+
+  const handleUnfollowUser = () => {
+    const variables = {
+      userIdToFollow: user.id,
+      currentUserId
+    };
+    unfollowUser({ variables });
+    onUnfollowUser();
+  };
 
   return (
     <Dialog
@@ -182,7 +222,7 @@ const UnfollowDialog = ({ user, onClose }) => {
         Unfollow @{user.username}
       </Typography>
       <Divider />
-      <Button className={classes.unfollowButton}>
+      <Button onClick={handleUnfollowUser} className={classes.unfollowButton}>
         Unfollow
       </Button>
       <Button onClick={onClose} className={classes.cancelButton}>
