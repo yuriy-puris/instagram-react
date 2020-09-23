@@ -18,7 +18,7 @@ import { Link, useHistory, useParams } from "react-router-dom";
 import { GearIcon } from "../icons";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import { AuthContext } from "../auth";
-import { useQuery, useMutation } from '@apollo/react-hooks';
+import { useQuery, useMutation, useApolloClient } from '@apollo/react-hooks';
 import { GET_USER_PROFILE } from '../graphql/queries';
 import { FOLLOW_USER, UNFOLLOW_USER } from '../graphql/mutations';
 import LoadingScreen from '../components/shared/LoadingScreen';
@@ -205,7 +205,7 @@ const UnfollowDialog = ({ user, onClose, onUnfollowUser }) => {
   return (
     <Dialog
       open
-      onClose
+      onClose={onClose}
       classes={{
         scrollPaper: classes.unfollowDialogScrollPaper,
       }}
@@ -284,9 +284,11 @@ const OptionsMenu = ({ handleCloseMenu }) => {
   const { signOut } = React.useContext(AuthContext); 
   const [showLogOutMessage, setLogOutMessage] = React.useState(false);
   const history = useHistory();
+  const client = useApolloClient();
 
-  const handleLogOutClick = () => {
+  const handleLogOutClick = async () => {
     setLogOutMessage(true);
+    await client.clearStore();
     signOut();
     setTimeout(() => {
       history.push('/accounts/login');
