@@ -111,6 +111,25 @@ export const GET_USER_PROFILE = gql`
 `;
 
 
-export const SUGGEST_USER = gql`
-  
+export const SUGGEST_USERS = gql`
+  query suggestUsers(
+    $limit: Int!
+    $followerIds: [uuid!]!
+    $createdAt: timestamptz!
+  ) {
+    users(
+      limit: $limit
+      where: {
+        _or: [
+          { id: { _in: $followerIds } }
+          { created_at: { _gt: $createdAt } }
+        ]
+      }
+    ) {
+      id
+      username
+      name
+      profile_image
+    }
+  }
 `;

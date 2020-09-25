@@ -5,15 +5,22 @@ import { LoadingLargeIcon } from '../../icons';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { getDefaultUser } from "../../data";
 import { Link } from 'react-router-dom';
 import { Avatar } from "@material-ui/core";
 import FollowButton from "./FollowButton";
+import { UserContext } from '../../App';
+import { useQuery } from '@apollo/react-hooks';
+import { SUGGEST_USERS } from '../../graphql/queries';
 
 
 const FollowSuggestions = ({ hideHeader }) => {
   const classes = useFollowSuggestionsStyles();
-  const [isLoading] = React.useState(false);
+  const { followerIds, me } = React.useContext(UserContext);
+  const variables = { limit: 20, followerIds, createdAt: me.created_at };
+  const { data, loading } = useQuery(SUGGEST_USERS, { variables });
+  console.log(data);
+
+
 
   return (
     <div className={classes.container}>
@@ -28,7 +35,7 @@ const FollowSuggestions = ({ hideHeader }) => {
         </Typography>
       )
     }
-      { isLoading ? ( 
+      { loading ? ( 
         <LoadingLargeIcon /> 
         ) : ( 
           <Slider 
@@ -44,7 +51,7 @@ const FollowSuggestions = ({ hideHeader }) => {
             easing="ease-in-out"
           >
             {
-              Array.from({length: 10}, () => getDefaultUser()).map(user => (
+              data.users.map(user => (
                 <FollowSuggestionsItem key={user.id} user={user} />
               ))
             }
@@ -57,7 +64,7 @@ const FollowSuggestions = ({ hideHeader }) => {
 
 const FollowSuggestionsItem = ({ user }) => {
   const classes = useFollowSuggestionsStyles();
-  const { profile_image, username, name } = user;
+  const { profile_image, username, name, id } = user;
 
   return (
     <div>
@@ -84,7 +91,7 @@ const FollowSuggestionsItem = ({ user }) => {
         <Typography color='textSecondary' variant='body2' className={classes.text} align='center'>
           {name}
         </Typography>
-        <FollowButton side={false} />
+        <FollowButton id={id} side={false} />
       </div>
     </div>
   )
