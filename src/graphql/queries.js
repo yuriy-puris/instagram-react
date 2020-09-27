@@ -133,3 +133,26 @@ export const SUGGEST_USERS = gql`
     }
   }
 `;
+
+export const EXPLORE_POSTS = gql`
+  query explorePosts($followingIds: [uuid!]!) {
+    posts(order_by: {
+      created_at: desc, 
+      likes_aggregate: {count: desc}},
+      where: { id: {_nin: $followingIds}}  
+    ) {
+      id
+      media
+      likes_aggregate {
+        aggregate {
+          count
+        }
+      }
+      comments_aggregate {
+        aggregate {
+          count
+        }
+      }
+    }
+  }
+`;

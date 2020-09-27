@@ -37,7 +37,7 @@ const ProfilePage = () => {
 
   if (loading) return <LoadingScreen />;
   const [user] = data.users;
-  const isOwner = user.id === currentUserId;
+  const isOwner = user && user.id ? user.id === currentUserId : false;
 
   const handleOptionsMenuClick = () => {
     setOptionsMenu(true);
