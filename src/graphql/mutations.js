@@ -215,3 +215,15 @@ export const UNFOLLOW_USER = gql`
     }
   }
 `;
+
+
+export const DELETE_POST = gql`
+	mutation deletePost($postId: uuid!, $userId: uuid!) {
+		delete_posts(where: { id: { _eq: $postId }, user_id: { _eq: $userId } }) {
+			affected_rows
+		}
+		delete_likes(where: { id: { _eq: $postId } }) {
+			affected_rows
+		}
+	}
+`;
