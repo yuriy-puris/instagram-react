@@ -1,4 +1,4 @@
-import { parseISO, isThisYear, formatDistanceStrict } from 'date-fns';
+import { parseISO, isThisYear, formatDistanceStrict, formatDistanceToNow } from 'date-fns';
 
 export function formatPostDate(date) {
     // MARCH 19
@@ -8,6 +8,10 @@ export function formatPostDate(date) {
     
     return isThisYear(new Date(date) ? formatShort : formatLong);
 };
+
+export function formatDateToNow(date) {
+    return formatDistanceToNow(new Date(date), { addSuffix: true }).toUpperCase();
+  }
 
 export function formatDateToNowShort(date) {
     formatDistanceStrict(new Date(date), new Date(Date.now()))
