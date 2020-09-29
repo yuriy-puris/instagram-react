@@ -23,7 +23,7 @@ function FollowButton({ id, side }) {
   };
 
   const handleUnfollowUser = () => {
-
+    console.log(unfollowUser)
   };
 
 

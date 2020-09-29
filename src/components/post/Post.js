@@ -30,25 +30,24 @@ import { formatPostDate, formatDateToNowShort } from '../../utils/formateDate';
 
 function Post({ postId }) {
   const classes = usePostStyles();
-  const [, setLoading] = React.useState(true);
   const [showOptionsDialog, setOptionsDialog] = React.useState(false);
   const variables = { postId };
-  const {data, loading} = useSubscription(GET_POST, { variables });
+  const { data, loading } = useSubscription(GET_POST, { variables });
 
-  setTimeout(() => setLoading(false), 2000);
-  if ( loading ) return <PostSkeleton />
+  if (loading) return <PostSkeleton />;
 
-  const { 
-    id, 
-    media, 
-    likes, 
-    likes_aggregate, 
-    location, 
-    user,
+  const {
+    id,
+    media,
+    likes,
+    likes_aggregate,
     saved_posts,
-    caption, 
-    comments, 
-    created_at } = data.posts_by_pk;
+    location,
+    user,
+    caption,
+    comments,
+    created_at,
+  } = data.posts_by_pk;
   const likesCount = likes_aggregate.aggregate.count;
 
   return (
@@ -103,7 +102,7 @@ function Post({ postId }) {
         </div>
       </article>
       {showOptionsDialog && (
-        <OptionsDialog onClose={() => setOptionsDialog(false)} />
+        <OptionsDialog postId={id} authorId={user.id} onClose={() => setOptionsDialog(false)} />
       )}
     </div>
   );

@@ -2,9 +2,10 @@ import React from "react";
 import { useOptionsDialogStyles } from "../../styles";
 import { Dialog, Zoom, Button, Divider } from '@material-ui/core'
 import { Link } from 'react-router-dom';
-import { defaultPost } from '../../data'
+import { defaultPost } from '../../data';
+import { UserContext } from '../../App';
 
-const OptionsDialog = ({ onClose }) => {
+const OptionsDialog = ({ postId, authorId, onClose }) => {
   const classes = useOptionsDialogStyles();
 
   return (
