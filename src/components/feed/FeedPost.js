@@ -23,6 +23,16 @@ import FollowSuggestions from '../shared/FollowSuggestions';
 import OptionsDialog from '../shared/OptionsDialog';
 import { formatDateToNow } from "../../utils/formateDate";
 import Img from "react-graceful-image";
+import {
+  SAVE_POST,
+  UNSAVE_POST,
+  LIKE_POST,
+  UNLIKE_POST,
+  CREATE_COMMENT
+} from '../../graphql/mutations';
+import { GET_FEED } from '../../graphql/queries';
+import { useMutation } from '@apollo/react-hooks';
+import { UserContext } from '../../App';
 
 function FeedPost({ index, post }) {
   const classes = useFeedPostStyles();
@@ -156,48 +166,87 @@ function FeedPost({ index, post }) {
   );
 }
 
-function LikeButton() {
+function LikeButton({ likes, postId, authorId }) {
   const classes = useFeedPostStyles();
+  const { currentUserId, feedIds } = React.useContext(UserContext);
+  const isAlreadyLiked = likes.some(({ user_id }) => user_id === currentUserId);
   const [liked, setLiked] = React.useState(false);
   const Icon = liked ? UnlikeIcon : LikeIcon;
   const className = liked ? classes.liked : classes.like;
   const onClick = liked ? handleUnlike : handleLike;
+  const [likePost] = useMutation(LIKE_POST);
+  const [unlikePost] = useMutation(UNLIKE_POST);
+  const variables = {
+    postId,
+    userId: currentUserId,
+    profileId: authorId
+  };
+
+  const handleUpdate = (cache, result) => {
+    const variables = { limit: 2, feedIds };
+    const data = cache.readQuery({
+      query: GET_FEED,
+      variables
+    });
+    const typename = result.data.insert_likes?.__typename;
+    const count = typename === 'likes_mutation_response' ? 1 : -1;
+    const posts = data.posts.map(post => ({
+      ...post,
+      likes_aggregate: {
+        ...post.likes_aggregate,
+        aggregate: {
+          ...post.likes_aggregate.aggregate,
+          count: post.likes_aggregate.aggregate.count + count
+        }
+      }
+    }));
+    cache.writeQuery({ query: GET_FEED, data: { posts } });
+  };
 
   function handleLike() {
-    console.log("like");
     setLiked(true);
+    unlikePost({ variables, update: handleUpdate });
   }
 
   function handleUnlike() {
-    console.log("unlike");
     setLiked(false);
+    likePost({ variables, update: handleUpdate });
   }
 
   return <Icon className={className} onClick={onClick} />;
 }
 
-function SaveButton() {
+function SaveButton({ postId, savedPosts }) {
   const classes = useFeedPostStyles();
+  const { currentUserId } = React.useContext(UserContext);
+  const isAlreadySaved = savedPosts.some(({ user_id }) => user_id === currentUserId);
   const [saved, setSaved] = React.useState(false);
   const Icon = saved ? RemoveIcon : SaveIcon;
   const onClick = saved ? handleRemove : handleSave;
+  const [savePost] = useMutation(SAVE_POST);
+  const [removePost] = useMutation(UNSAVE_POST);
+  const variables = {
+    postId,
+    userId: currentUserId
+  };
 
   function handleSave() {
-    console.log("save");
     setSaved(true);
-  }
+    savePost({ variables });
+  };
 
   function handleRemove() {
-    console.log("remove");
     setSaved(false);
+    removePost({ variables });
   }
 
   return <Icon className={classes.saveIcon} onClick={onClick} />;
 }
 
-function Comment() {
+function Comment({ postId }) {
   const classes = useFeedPostStyles();
   const [content, setContent] = React.useState("");
+  const { currentUserId, feedIds } = React.useContext(UserContext);
 
   return (
     <div className={classes.commentContainer}>
