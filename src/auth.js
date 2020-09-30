@@ -58,7 +58,6 @@ const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       const data = await firebase.auth().signInWithPopup(provider);
-      console.log(data)
       if ( data.additionalUserInfo.isNewUser ) {
         const { uid, displayName, email, photoURL } = data.user;
         const username = `${displayName.replace(/\s+/g, '')}${uid.slice(-5)}`;
@@ -82,7 +81,6 @@ const AuthProvider = ({ children }) => {
 
   const updateEmail = async email => {
     await authState.user.updateEmail(email);
-    console.log(authState.user);
   };
 
   const signOut = async () => {

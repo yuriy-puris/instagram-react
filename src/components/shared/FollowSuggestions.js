@@ -18,7 +18,6 @@ const FollowSuggestions = ({ hideHeader }) => {
   const { followerIds, me } = React.useContext(UserContext);
   const variables = { limit: 20, followerIds, createdAt: me.created_at };
   const { data, loading } = useQuery(SUGGEST_USERS, { variables });
-  console.log(data);
 
 
 

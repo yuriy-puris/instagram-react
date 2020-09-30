@@ -24,7 +24,6 @@ function FeedPage() {
   const isPageBottom = usePageBottom();
 
   const handleUpdateQuery = React.useCallback((prev, { fetchMoreResult }) => {
-    // console.log({ prev, fetchMoreResult });
     if (fetchMoreResult.posts.length === 0) {
       setEndOfFeed(true);
       return prev;

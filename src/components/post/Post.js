@@ -70,7 +70,7 @@ function Post({ postId }) {
         <div className={classes.postButtonsWrapper}>
           <div className={classes.postButtons}>
             <LikeButton likes={likes} authorId={user.id} postId={id} />
-            <Link to={`/p/${id}`}>
+            <Link to={`/${id}`}>
               <CommentIcon />
             </Link>
             <ShareIcon />
@@ -88,7 +88,7 @@ function Post({ postId }) {
           >
             <AuthorCaption user={user} createdAt={created_at} caption={caption} />
             { comments.map(comment => (
-              <UserComment key={comment.id} comment={comment} />
+              <UserComment user={user} key={comment.id} comment={comment} />
             )) }
           </div>
           <Typography color="textSecondary" className={classes.datePosted}>
@@ -140,7 +140,7 @@ const AuthorCaption = ({ user, caption, createdAt }) => {
   )
 };
 
-const UserComment = ({ comment }) => {
+const UserComment = ({ user, comment }) => {
   const classes = usePostStyles();
 
   return (
@@ -151,7 +151,7 @@ const UserComment = ({ comment }) => {
         style={{ marginRight: 14, width: 32, height: 32 }}
       />
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <Link to={comment.user.username}>
+        <Link to={user.username}>
           <Typography variant='subtitle1' component='span' className={classes.username}>
             { comment.user.username }
           </Typography>
@@ -215,7 +215,6 @@ function SaveButton({ savedPosts, postId }) {
   };
 
   function handleSave() {
-    console.log('like');
     setSaved(true);
     savePost({ variables });
   }

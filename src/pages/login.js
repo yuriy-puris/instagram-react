@@ -60,7 +60,6 @@ function LoginPage() {
       variables
     });
     const userEmail = response.data.users[0]?.emal || "no@email.com";
-    console.log(userEmail);
     return userEmail;
   };
 

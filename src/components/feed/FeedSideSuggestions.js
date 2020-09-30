@@ -12,7 +12,7 @@ function FeedSideSuggestions() {
   const classes = useFeedSideSuggestionsStyles();
   const { me, followerIds } = React.useContext(UserContext);
   const variables = { limit: 5, followerIds, createdAt: me.created_at };
-  const { data, loading, fetchMore } = useQuery(SUGGEST_USERS, { variables });
+  const { data, loading } = useQuery(SUGGEST_USERS, { variables });
 
 
 

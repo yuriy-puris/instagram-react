@@ -144,7 +144,16 @@ export const CREATE_COMMENT = gql`
 			user_id: $userId,
 			content: $content
 		}) {
-			affected_rows
+			returning {
+				id
+				created_at
+				post_id
+				user_id
+				content
+				user {
+					username
+				}
+			}
 		}
 	}
 `;

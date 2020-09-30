@@ -2,7 +2,6 @@ import React from "react";
 import { useOptionsDialogStyles } from "../../styles";
 import { Dialog, Zoom, Button, Divider } from '@material-ui/core'
 import { Link, useHistory } from 'react-router-dom';
-import { defaultPost } from '../../data';
 import { UserContext } from '../../App';
 import { UNFOLLOW_USER, DELETE_POST } from '../../graphql/mutations';
 import { useMutation } from "@apollo/react-hooks";
@@ -50,7 +49,7 @@ const OptionsDialog = ({ postId, authorId, onClose }) => {
       TransitionComponent={Zoom}
     >
       {
-        !isUnrelatedUser && <Button onClick={onClick} className={classes.redButton}>Unfollow</Button>
+        !isUnrelatedUser && <Button onClick={onClick} className={classes.redButton}>{buttonText}</Button>
       }
       <Divider />
       <Button className={classes.button}>

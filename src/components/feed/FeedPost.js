@@ -170,7 +170,7 @@ function LikeButton({ likes, postId, authorId }) {
   const classes = useFeedPostStyles();
   const { currentUserId, feedIds } = React.useContext(UserContext);
   const isAlreadyLiked = likes.some(({ user_id }) => user_id === currentUserId);
-  const [liked, setLiked] = React.useState(false);
+  const [liked, setLiked] = React.useState(isAlreadyLiked);
   const Icon = liked ? UnlikeIcon : LikeIcon;
   const className = liked ? classes.liked : classes.like;
   const onClick = liked ? handleUnlike : handleLike;
@@ -219,15 +219,17 @@ function LikeButton({ likes, postId, authorId }) {
 function SaveButton({ postId, savedPosts }) {
   const classes = useFeedPostStyles();
   const { currentUserId } = React.useContext(UserContext);
-  const isAlreadySaved = savedPosts.some(({ user_id }) => user_id === currentUserId);
-  const [saved, setSaved] = React.useState(false);
+  const isAlreadySaved = savedPosts.some(
+    ({ user_id }) => user_id === currentUserId
+  );
+  const [saved, setSaved] = React.useState(isAlreadySaved);
   const Icon = saved ? RemoveIcon : SaveIcon;
   const onClick = saved ? handleRemove : handleSave;
   const [savePost] = useMutation(SAVE_POST);
   const [removePost] = useMutation(UNSAVE_POST);
   const variables = {
     postId,
-    userId: currentUserId
+    userId: currentUserId,
   };
 
   function handleSave() {
@@ -244,9 +246,48 @@ function SaveButton({ postId, savedPosts }) {
 }
 
 function Comment({ postId }) {
+  const { currentUserId, feedIds } = React.useContext(UserContext);
   const classes = useFeedPostStyles();
   const [content, setContent] = React.useState("");
-  const { currentUserId, feedIds } = React.useContext(UserContext);
+  const [createComment] = useMutation(CREATE_COMMENT);
+
+  function handleUpdate(cache, result) {
+    const variables = { limit: 2, feedIds };
+    const data = cache.readQuery({
+      query: GET_FEED,
+      variables,
+    });
+    const oldComment = result.data.insert_comments.returning[0];
+    const newComment = {
+      ...oldComment,
+      user: { ...oldComment.user },
+    };
+    const posts = data.posts.map((post) => {
+      const newPost = {
+        ...post,
+        comments: [...post.comments, newComment],
+        comments_aggregate: {
+          ...post.comments_aggregate,
+          aggregate: {
+            ...post.comments_aggregate.aggregate,
+            count: post.comments_aggregate.aggregate.count + 1,
+          },
+        },
+      };
+      return post.id === postId ? newPost : post;
+    });
+    cache.writeQuery({ query: GET_FEED, data: { posts } });
+    setContent("");
+  }
+
+  function handleAddComment() {
+    const variables = {
+      content,
+      postId,
+      userId: currentUserId,
+    };
+    createComment({ variables, update: handleUpdate });
+  }
 
   return (
     <div className={classes.commentContainer}>
@@ -267,6 +308,7 @@ function Comment({ postId }) {
         }}
       />
       <Button
+        onClick={handleAddComment}
         color="primary"
         className={classes.commentButton}
         disabled={!content.trim()}
